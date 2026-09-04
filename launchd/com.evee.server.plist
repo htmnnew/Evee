@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Evee app server, always on (macOS launchd user agent).
+
+  Runs serve.py under `caffeinate -s` so the machine stays awake while it is up.
+  On the lid-closed server Air this must be paired with `sudo pmset -a disablesleep 1`
+  (caffeinate alone does NOT prevent lid-close sleep) and, on Intel,
+  `sudo pmset -a autorestart 1` so it reboots after a power blip.
+
+  Install:
+    cp launchd/com.evee.server.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.evee.server.plist
+
+  Restart:    launchctl kickstart -k gui/$(id -u)/com.evee.server
+  Status:     launchctl print gui/$(id -u)/com.evee.server | head -20
+  Uninstall:  launchctl bootout gui/$(id -u)/com.evee.server
+
+  EDIT BEFORE INSTALLING: launchd requires absolute paths and does not
+  expand ~ or $HOME, so replace every /Users/YOUR_USERNAME below with your
+  own home directory (and the repo path, if your checkout lives elsewhere).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.evee.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/caffeinate</string>
+        <string>-s</string>
+        <string>/usr/bin/python3</string>
+        <string>/Users/YOUR_USERNAME/Developer/Evee/serve.py</string>
+        <string>8000</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee</string>
+
+    <!-- Start at login and restart automatically if it ever exits. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/logs/server.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/logs/server.log</string>
+</dict>
+</plist>

@@ -1,0 +1,15 @@
+{
+  "name": "Evee — Home Inventory",
+  "short_name": "Evee",
+  "description": "Your home, mapped. Ask Evee what you own and where it is.",
+  "start_url": "/Evee.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#efe1c6",
+  "theme_color": "#efe1c6",
+  "icons": [
+    { "src": "/icons/evee-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/evee-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/evee-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

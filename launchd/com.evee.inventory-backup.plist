@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Daily Evee inventory backup (macOS launchd user agent).
+
+  Install:
+    cp launchd/com.evee.inventory-backup.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.evee.inventory-backup.plist
+
+  Run once now:   launchctl kickstart -k gui/$(id -u)/com.evee.inventory-backup
+  Uninstall:      launchctl bootout gui/$(id -u)/com.evee.inventory-backup
+                  rm ~/Library/LaunchAgents/com.evee.inventory-backup.plist
+
+  EDIT BEFORE INSTALLING: launchd requires absolute paths and does not
+  expand ~ or $HOME, so replace every /Users/YOUR_USERNAME below with your
+  own home directory (and the repo path, if your checkout lives elsewhere).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.evee.inventory-backup</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/YOUR_USERNAME/Developer/Evee/backup.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee</string>
+
+    <!-- Run every day at 03:00 local time. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/backups/backup.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/backups/backup.log</string>
+</dict>
+</plist>

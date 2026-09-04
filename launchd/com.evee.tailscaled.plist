@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Tailscale daemon for the Evee server (macOS launchd user agent).
+
+  Runs tailscaled in USERSPACE NETWORKING mode, which needs no root: the socket
+  and state live under ~/.tailscale instead of /var/run and /Library. This is the
+  same mode Tailscale uses in unprivileged containers.
+
+  Why userspace mode: installing the normal system daemon needs
+  `sudo brew services start tailscale`, and this box is administered remotely
+  (iPhone -> Claude Code) where no one can type a sudo password.
+
+  Trade-offs, both harmless here:
+    - MagicDNS cannot rewrite system DNS (needs root), so THIS Mac cannot resolve
+      *.ts.net names. Other devices resolve them fine via their own Tailscale client.
+    - The host does not route all its traffic over Tailscale, and peers cannot reach
+      arbitrary ports on it. `tailscale serve` runs inside tailscaled, so it is
+      unaffected -- that is what publishes Evee over HTTPS.
+
+  Serves:  https://evee-server.<your-tailnet>.ts.net  ->  http://127.0.0.1:8000
+  The serve config lives in the statedir, so it survives daemon restarts.
+  The Let's Encrypt cert is provisioned and renewed automatically by tailscaled.
+
+  Install:
+    cp launchd/com.evee.tailscaled.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.evee.tailscaled.plist
+
+  Restart:    launchctl kickstart -k gui/$(id -u)/com.evee.tailscaled
+  Status:     tailscale --socket=$HOME/.tailscale/tailscaled.sock status
+  Serve cfg:  tailscale --socket=$HOME/.tailscale/tailscaled.sock serve status
+  Uninstall:  launchctl bootout gui/$(id -u)/com.evee.tailscaled
+
+  EDIT BEFORE INSTALLING: launchd requires absolute paths and does not
+  expand ~ or $HOME, so replace every /Users/YOUR_USERNAME below with your
+  own home directory (and the repo path, if your checkout lives elsewhere).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.evee.tailscaled</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/opt/tailscale/bin/tailscaled</string>
+        <string>--tun=userspace-networking</string>
+        <string>--socket=/Users/YOUR_USERNAME/.tailscale/tailscaled.sock</string>
+        <string>--statedir=/Users/YOUR_USERNAME/.tailscale/state</string>
+    </array>
+
+    <!-- Start at login and restart automatically if it ever exits. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/logs/tailscaled.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Developer/Evee/logs/tailscaled.log</string>
+</dict>
+</plist>
