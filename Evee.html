@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Evee — Home Inventory</title>
+
+  <!-- Installable / fullscreen on iPad. "Add to Home Screen" only escapes the
+       Safari toolbar when apple-mobile-web-app-capable is set AND the page is
+       served over real HTTPS — which it is now, via Tailscale. Without the
+       apple-touch-icon iOS uses a screenshot of the page as the tile. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Evee">
+  <meta name="theme-color" content="#efe1c6">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/evee-192.png">
+  <link rel="apple-touch-icon" href="/icons/evee-180.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #efe1c6;
+      --ink: #3a2a1e;
+    }
+    html, body, #root { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
+      background: var(--bg); color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased; }
+    button { font-family: inherit; }
+    /* Custom scrollbars to match the warm palette */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(58,42,30,.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(58,42,30,.35); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- Live reload. The server streams {boot, v} over SSE; boot changes when it
+       restarts, v when any watched file is edited. Either one moving means the
+       code on disk is newer than what is running here, so pull it in. Saves
+       hard-reloading every device by hand after a change. Plain <script> — this
+       must not wait on Babel, since a syntax error in a .jsx would otherwise
+       leave the page unable to reload itself. -->
+  <script>
+  (function () {
+    if (!window.EventSource) return;
+    var seen = null, loadedAt = Date.now(), es = null;
+    function connect() {
+      es = new EventSource('/api/livereload');
+      es.onmessage = function (e) {
+        var d; try { d = JSON.parse(e.data); } catch (_) { return; }
+        var stamp = d.boot + ':' + d.v;
+        if (seen === null) { seen = stamp; return; }   // first message is the baseline
+        if (stamp === seen) return;
+        seen = stamp;
+        if (Date.now() - loadedAt < 3000) return;      // never loop during startup
+        // Wait out an in-flight conversation rather than cutting Evee off.
+        var t = setInterval(function () {
+          if (window.__eveeBusy) return;
+          clearInterval(t);
+          location.reload();
+        }, 400);
+      };
+      // Reconnect ourselves rather than relying on EventSource's own retry, so a
+      // server restart is picked up promptly and predictably.
+      es.onerror = function () { try { es.close(); } catch (_) {} setTimeout(connect, 2000); };
+    }
+    connect();
+  })();
+  </script>
+
+  <script type="text/babel" src="hifi/iso.jsx"         data-presets="react"></script>
+  <script type="text/babel" src="hifi/world.jsx"       data-presets="react"></script>
+  <script type="text/babel" src="hifi/scenes.jsx"      data-presets="react"></script>
+  <script type="text/babel" src="hifi/chat.jsx"        data-presets="react"></script>
+  <script type="text/babel" src="hifi/panels.jsx"      data-presets="react"></script>
+  <script type="text/babel" src="hifi/editor.jsx"      data-presets="react"></script>
+  <script type="text/babel" src="hifi/room-editor.jsx" data-presets="react"></script>
+  <script type="text/babel" src="hifi/api.jsx"         data-presets="react"></script>
+  <script type="text/babel" src="hifi/app.jsx"         data-presets="react"></script>
+</body>
+</html>

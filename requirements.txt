@@ -1,0 +1,4 @@
+# Backend dependencies for serve.py.
+# The inventory backend (/api/inventory) is stdlib-only and needs nothing here.
+# The AI assistant (/api/chat, Phase 2) needs the official Anthropic SDK:
+anthropic>=0.40
